@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -7,7 +8,7 @@ from base64 import urlsafe_b64encode
 
 
 class Config:
-    SQLALCHEMY_DATABASE_URI = 'postgresql://localhost/url_shortener'
+    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
     SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 app = Flask(__name__)
