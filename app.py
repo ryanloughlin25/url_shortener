@@ -7,6 +7,7 @@ from hashlib import sha1
 from base64 import urlsafe_b64encode
 from json import dumps
 from sqlalchemy.sql import func
+from sqlalchemy.exc import IntegrityError, InvalidRequestError
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -17,7 +18,7 @@ class Url(db.Model):
     short_url_hash_size = 6
     id = db.Column(db.Integer, primary_key=True)
     long_url = db.Column(db.Text)
-    short_url_hash = db.Column(db.String(short_url_hash_size))
+    short_url_hash = db.Column(db.String(short_url_hash_size), unique=True)
     domain = db.Column(db.Text)
     number_of_visits = db.Column(db.Integer)
     created_at = db.Column(db.DateTime)
@@ -92,8 +93,13 @@ def post_url():
         return "missing parameter 'url'", 422
     url = Url(data['url'])
     db.session.add(url)
-    db.session.commit()
-    return dumps(url.serialize()), 201
+    try:
+        db.session.commit()
+    except (IntegrityError, InvalidRequestError):
+        db.session.rollback()
+        return dumps(select_url(url.short_url_hash).serialize()), 409
+    else:
+        return dumps(url.serialize()), 201
 
 if __name__ == '__main__':
     app.debug = True

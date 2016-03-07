@@ -112,7 +112,6 @@ class TestInvalidRequests(TestUrlShortener):
 
     def test_post_url_invalid_json(self):
         self.assertEqual(Url.query.all(), [])
-        self.assertEqual(Url.query.all(), [])
         with app.test_client() as client:
             response = client.post(
                 '/urls',
@@ -122,6 +121,29 @@ class TestInvalidRequests(TestUrlShortener):
         self.assertEqual(response.status_code, 422)
         url = Url.query.first()
         self.assertIsNone(url)
+
+    def test_post_url_already_exists(self):
+        self.assertEqual(Url.query.all(), [])
+        with app.test_client() as client:
+            response = client.post(
+                '/urls',
+                data=dumps({'url': self.google_url}),
+                content_type='application/json',
+            )
+        self.assertEqual(response.status_code, 201)
+        url = Url.query.first()
+        self.assertEqual(url.domain, 'www.google.com')
+        self.assertEqual(url.short_url_hash, 'NzJqKe')
+        with app.test_client() as client:
+            response = client.post(
+                '/urls',
+                data=dumps({'url': self.google_url}),
+                content_type='application/json',
+            )
+        self.assertEqual(response.status_code, 409)
+        url = Url.query.first()
+        self.assertEqual(url.domain, 'www.google.com')
+        self.assertEqual(url.short_url_hash, 'NzJqKe')
 
 if __name__ == '__main__':
     unittest.main()
