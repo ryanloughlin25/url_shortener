@@ -43,5 +43,6 @@ def post_url():
     return jsonify({'url': url.long_url}), 201
 
 if __name__ == '__main__':
+    app.debug = True
     db.create_all()
     app.run()
