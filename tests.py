@@ -1,6 +1,8 @@
 from app import app, db, Url
-from json import dumps
+from json import dumps, loads
 import unittest
+from string import ascii_lowercase
+from random import sample
 
 
 class TestSomething(unittest.TestCase):
@@ -11,6 +13,9 @@ class TestSomething(unittest.TestCase):
     def tearDown(self):
         db.session.remove()
         db.drop_all()
+
+    def get_random_url(self):
+        return 'http://www.{}.com'.format(''.join(sample(ascii_lowercase, 5)))
 
     def test_post_url(self):
         self.assertEqual(Url.query.all(), [])
@@ -32,7 +37,7 @@ class TestSomething(unittest.TestCase):
         with app.test_client() as client:
             response = client.get('/urls/{}'.format(url.short_url_hash))
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data.decode(), url.to_json())
+        self.assertEqual(response.data.decode(), dumps(url.serialize()))
 
     def test_redirect(self):
         url = Url(self.google_url)
@@ -53,7 +58,17 @@ class TestSomething(unittest.TestCase):
             url = Url.query.filter_by(short_url_hash=url.short_url_hash).first()
             self.assertEqual(url.number_of_visits, i)
 
-
+    def test_recent_urls(self):
+        random_urls = [Url(self.get_random_url()) for _ in range(200)]
+        for url in random_urls:
+            db.session.add(url)
+            db.session.commit()
+        with app.test_client() as client:
+            response = client.get('/urls')
+        urls = loads(response.data.decode())
+        self.assertEqual(response.status_code, 200)
+        for url, random_url in zip(urls, random_urls[-1:-100]):
+            self.assertEqual(url['longUrl'], random_url.long_url)
 
 if __name__ == '__main__':
     unittest.main()

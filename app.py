@@ -34,14 +34,13 @@ class Url(db.Model):
             sha1(self.long_url.encode('utf-8')).digest()
         ).decode()[:Url.short_url_hash_size]
 
-    def to_json(self):
-        url_dict = {
+    def serialize(self):
+        return {
             'longUrl': self.long_url,
             'shortUrlHash': self.short_url_hash,
             'domain': self.domain,
             'numberOfVisits': self.number_of_visits,
         }
-        return dumps(url_dict)
 
 def select_url(short_url_hash):
     url = Url.query.filter_by(short_url_hash=short_url_hash).first()
@@ -61,9 +60,14 @@ def redirect_to_existing_url(short_url_hash):
 def get_url(short_url_hash):
     url = select_url(short_url_hash)
     if url:
-        return url.to_json(), 200
+        return dumps(url.serialize()), 200
     else:
         return 404
+
+@app.route('/urls', methods=['GET'])
+def search_urls():
+    urls = Url.query.order_by(Url.created_at.desc()).limit(100).all()
+    return dumps([url.serialize() for url in urls]), 200
 
 @app.route('/urls', methods=['POST'])
 def post_url():
@@ -71,7 +75,7 @@ def post_url():
     url = Url(data['url'])
     db.session.add(url)
     db.session.commit()
-    return url.to_json(), 201
+    return dumps(url.serialize()), 201
 
 if __name__ == '__main__':
     app.debug = True
