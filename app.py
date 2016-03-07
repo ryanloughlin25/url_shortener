@@ -86,6 +86,10 @@ def popular_domains():
 @app.route('/urls', methods=['POST'])
 def post_url():
     data = request.get_json()
+    if data is None:
+        return "POST to /urls must include json data with a 'url' property", 415
+    elif 'url' not in data:
+        return "missing parameter 'url'", 422
     url = Url(data['url'])
     db.session.add(url)
     db.session.commit()

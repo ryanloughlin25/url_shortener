@@ -102,5 +102,26 @@ class TestInvalidRequests(TestUrlShortener):
             response = client.get('/{}'.format(url.short_url_hash))
         self.assertEqual(response.status_code, 404)
 
+    def test_post_url_without_json(self):
+        self.assertEqual(Url.query.all(), [])
+        with app.test_client() as client:
+            response = client.post('/urls')
+        self.assertEqual(response.status_code, 415)
+        url = Url.query.first()
+        self.assertIsNone(url)
+
+    def test_post_url_invalid_json(self):
+        self.assertEqual(Url.query.all(), [])
+        self.assertEqual(Url.query.all(), [])
+        with app.test_client() as client:
+            response = client.post(
+                '/urls',
+                data=dumps({'a': 'b', 'c': 'd'}),
+                content_type='application/json',
+            )
+        self.assertEqual(response.status_code, 422)
+        url = Url.query.first()
+        self.assertIsNone(url)
+
 if __name__ == '__main__':
     unittest.main()
