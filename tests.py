@@ -43,6 +43,17 @@ class TestSomething(unittest.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.location, self.google_url)
 
+    def test_number_of_vists(self):
+        url = Url(self.google_url)
+        db.session.add(url)
+        db.session.commit()
+        for i in range(1, 5):
+            with app.test_client() as client:
+                client.get('/{}'.format(url.short_url_hash))
+            url = Url.query.filter_by(short_url_hash=url.short_url_hash).first()
+            self.assertEqual(url.number_of_visits, i)
+
+
 
 if __name__ == '__main__':
     unittest.main()

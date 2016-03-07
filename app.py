@@ -51,6 +51,8 @@ def select_url(short_url_hash):
 def redirect_to_existing_url(short_url_hash):
     url = select_url(short_url_hash)
     if url:
+        url.number_of_visits += 1
+        db.session.commit()
         return redirect(url.long_url, code=302)
     else:
         return 404
