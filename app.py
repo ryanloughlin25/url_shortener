@@ -1,15 +1,10 @@
-import os
+from config import Config
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 from urllib.parse import urlparse
 from hashlib import sha1
 from base64 import urlsafe_b64encode
-
-
-class Config:
-    SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
-    SQLALCHEMY_TRACK_MODIFICATIONS = True
 
 app = Flask(__name__)
 app.config.from_object(Config)
