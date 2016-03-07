@@ -5,7 +5,7 @@ from string import ascii_lowercase
 from random import sample
 
 
-class TestSomething(unittest.TestCase):
+class TestUrlShortener(unittest.TestCase):
     def setUp(self):
         db.create_all()
         self.google_url = 'https://www.google.com/?gws_rd=ssl'
@@ -17,6 +17,8 @@ class TestSomething(unittest.TestCase):
     def get_random_url(self):
         return 'http://www.{}.com'.format(''.join(sample(ascii_lowercase, 5)))
 
+
+class TestValidRequests(TestUrlShortener):
     def test_post_url(self):
         self.assertEqual(Url.query.all(), [])
         with app.test_client() as client:
@@ -86,6 +88,19 @@ class TestSomething(unittest.TestCase):
         for url, random_url in zip(urls, random_urls[-1:-10]):
             self.assertEqual(url['longUrl'], random_url.long_url)
 
+
+class TestInvalidRequests(TestUrlShortener):
+    def test_get_invalid_url(self):
+        url = Url(self.google_url)
+        with app.test_client() as client:
+            response = client.get('/urls/{}'.format(url.short_url_hash))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_invalid_url_redirect(self):
+        url = Url(self.google_url)
+        with app.test_client() as client:
+            response = client.get('/{}'.format(url.short_url_hash))
+        self.assertEqual(response.status_code, 404)
 
 if __name__ == '__main__':
     unittest.main()

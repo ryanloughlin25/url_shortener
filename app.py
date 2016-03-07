@@ -55,7 +55,7 @@ def redirect_to_existing_url(short_url_hash):
         db.session.commit()
         return redirect(url.long_url, code=302)
     else:
-        return 404
+        return "url not found", 404
 
 @app.route('/urls/<short_url_hash>', methods=['GET'])
 def get_url(short_url_hash):
@@ -63,7 +63,7 @@ def get_url(short_url_hash):
     if url:
         return dumps(url.serialize()), 200
     else:
-        return 404
+        return "url not found", 404
 
 @app.route('/urls', methods=['GET'])
 def search_urls():
