@@ -70,5 +70,22 @@ class TestSomething(unittest.TestCase):
         for url, random_url in zip(urls, random_urls[-1:-100]):
             self.assertEqual(url['longUrl'], random_url.long_url)
 
+    def test_popular_domains(self):
+        random_urls = [Url(self.get_random_url()) for _ in range(15)]
+        for index, url in enumerate(random_urls):
+            db.session.add(url)
+            db.session.commit()
+            for _ in range(index):
+                with app.test_client() as client:
+                    client.get('/{}'.format(url.short_url_hash))
+        with app.test_client() as client:
+            response = client.get('/urls/popular_domains')
+        urls = loads(response.data.decode())
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(urls[0]['numberOfVisits'], 14)
+        for url, random_url in zip(urls, random_urls[-1:-10]):
+            self.assertEqual(url['longUrl'], random_url.long_url)
+
+
 if __name__ == '__main__':
     unittest.main()

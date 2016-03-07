@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from hashlib import sha1
 from base64 import urlsafe_b64encode
 from json import dumps
+from sqlalchemy.sql import func
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -68,6 +69,19 @@ def get_url(short_url_hash):
 def search_urls():
     urls = Url.query.order_by(Url.created_at.desc()).limit(100).all()
     return dumps([url.serialize() for url in urls]), 200
+
+@app.route('/urls/popular_domains', methods=['GET'])
+def popular_domains():
+    results = Url.query.with_entities(
+        Url.domain,
+        func.sum(Url.number_of_visits).label('visits')
+    ).group_by(Url.domain).order_by('"visits" DESC').limit(10)
+    return dumps([
+        {
+            'domain': result[0],
+            'numberOfVisits': result[1],
+        } for result in results
+    ]), 200
 
 @app.route('/urls', methods=['POST'])
 def post_url():
